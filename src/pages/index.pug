@@ -1,0 +1,12 @@
+extends /pages/_template
+
+block var
+  - fileName = 'index'
+
+block link
+  link(rel="stylesheet" href=`${cssPath}/top.css?${TIMESTAMP}`)
+
+block contents
+
+block bodyEnd
+  script(src=`${jsPath}/script.js`)
