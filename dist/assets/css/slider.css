@@ -1,0 +1,32 @@
+.slider-list-wrapper {
+  width: 500px;
+  overflow: hidden;
+  margin: auto;
+}
+.slider-list {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: start;
+      -ms-flex-align: start;
+          align-items: flex-start;
+  position: relative;
+  left: 0;
+  top: 0;
+}
+.slider-item {
+  height: 100px;
+  width: 100%;
+  -ms-flex-negative: 0;
+      flex-shrink: 0;
+}
+.slider-item:first-child {
+  background-color: yellow;
+}
+.slider-item:nth-child(2) {
+  background-color: red;
+}
+.slider-item:last-child {
+  background-color: blue;
+}
+/*# sourceMappingURL=slider.css.map */

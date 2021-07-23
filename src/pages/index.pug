@@ -4,9 +4,16 @@ block var
   - fileName = 'index'
 
 block link
-  link(rel="stylesheet" href=`${cssPath}/top.css?${TIMESTAMP}`)
+  link(rel="stylesheet" href=`${cssPath}/slider.css?${TIMESTAMP}`)
 
 block contents
+  .slider
+    .slider-inner
+      .slider-list-wrapper
+        .slider-list
+          .slider-item slide1
+          .slider-item slide2
+          .slider-item slide3
 
 block bodyEnd
   script(src=`${jsPath}/script.js`)
