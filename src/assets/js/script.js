@@ -28,9 +28,14 @@
      * @param {object} events - The events used as callback function.
      */
     setEventListener(events) {
-      this.el.addEventListener('mousedown', this.startAnimation.bind(this));
-      this.el.addEventListener('mousemove', this.updateCursorPositionValues.bind(this));
-      this.el.addEventListener('mouseup', this.endAnimation.bind(this));
+      const eventNames = {
+        start: this.detectMobile() ? 'touchstart' : 'mousedown',
+        move: this.detectMobile() ? 'touchmove' : 'mousemove',
+        end: this.detectMobile() ? 'touchend' : 'mouseup'
+      }
+      this.el.addEventListener(eventNames.start, this.startAnimation.bind(this));
+      this.el.addEventListener(eventNames.move, this.updateCursorPositionValues.bind(this));
+      this.el.addEventListener(eventNames.end, this.endAnimation.bind(this));
     }
 
     /*
@@ -60,7 +65,7 @@
         return
       }
 
-      this.x = parseInt(this.el.style.left) + e.clientX - this.lastDragInfo.clientX;
+      this.x = parseInt(this.el.style.left) + this.clientX(e) - this.clientX(this.lastDragInfo);
       this.lastDragInfo = e;
     }
 
@@ -76,11 +81,10 @@
 
       const clickCount = this.mouseLocations.length;
       const xDiff = this.mouseLocations[clickCount - 1].x - this.mouseLocations[0].x;
-      const yDiff = this.mouseLocations[clickCount - 1].y - this.mouseLocations[0].y;
 
       this.velocity.x = xDiff / clickCount;
-      this.velocity.y = yDiff / clickCount;
-      this.mouseLocations.length = 0;
+      this.mouseLocations = [];
+      this.lastDragInfo = [];
     }
 
     /*
@@ -102,10 +106,7 @@
     onScrollTimer() {
       if (this.isAnimated) {
         // Keep track of where the latest mouse location is
-        this.mouseLocations.unshift({
-          x: this.lastDragInfo.x,
-          y: this.lastDragInfo.y
-        });
+        this.mouseLocations.unshift({ x: this.clientX(this.lastDragInfo) });
 
         // Make sure that we're only keeping track of the last 10 mouse
         // clicks (just for efficiency)
@@ -115,20 +116,15 @@
         }
       } else {
         const totalTics = Math.floor(this.#scrollTime / 20);
-
         const fractionRemaining = (totalTics - this.timerCount) / totalTics;
-
         const xVelocity = this.velocity.x * fractionRemaining;
-        const yVelocity = this.velocity.y * fractionRemaining;
 
-        this.moveSlider(
-          -xVelocity + parseInt(this.el.style.left),
-          -yVelocity + parseInt(this.el.style.top)
-        );
+        this.moveSlider(parseInt(this.el.style.left) - xVelocity);
 
-        // Only scroll for 20 calls of this function
-        if(this.timerCount == totalTics) {
+        // Only scroll for 10 calls of this function
+        if(this.timerCount === totalTics) {
           clearInterval(this.timerId);
+          this.x = parseInt(this.el.style.left) - xVelocity;
           this.timerId = -1
         }
 
@@ -143,6 +139,36 @@
      */
     moveSlider(x) {
       this.el.style.left = x + 'px';
+    }
+
+    /*
+     * Return a x value of cursor position.
+     * @param {object} - event
+     * @return {number}
+     */
+    clientX(event) {
+      if (this.detectMobile()) {
+        return event.changedTouches[0].clientX;
+      }
+      return event.clientX;
+    }
+
+    /*
+     * Detect whether a mobile browser.
+     * @return {boolean}
+     */
+    detectMobile() {
+      const toMatch = [
+        /Android/i,
+        /webOS/i,
+        /iPhone/i,
+        /iPad/i,
+        /iPod/i,
+        /BlackBerry/i,
+        /Windows Phone/i
+      ];
+
+      return toMatch.some(item => navigator.userAgent.match(item));
     }
   }
 
