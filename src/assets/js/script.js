@@ -57,19 +57,6 @@
     }
 
     /*
-     * Update cursor position values.
-     * @param {object} e -event
-     */
-    updateCursorPositionValues(e) {
-      if (!this.lastDragInfo) {
-        return
-      }
-
-      this.x = parseInt(this.el.style.left) + this.clientX(e) - this.clientX(this.lastDragInfo);
-      this.lastDragInfo = e;
-    }
-
-    /*
      * End animation.
      */
     endAnimation(e) {
@@ -98,6 +85,28 @@
       this.moveSlider(this.x);
 
       setTimeout(this.animation.bind(this), this.frameTime);
+    }
+
+    /*
+     * Move slider
+     * @param {number} x
+     * @param {number} y
+     */
+    moveSlider(x) {
+      this.el.style.left = x + 'px';
+    }
+
+    /*
+     * Update cursor position values.
+     * @param {object} e -event
+     */
+    updateCursorPositionValues(e) {
+      if (!this.lastDragInfo) {
+        return
+      }
+
+      this.x = parseInt(this.el.style.left) + this.clientX(e) - this.clientX(this.lastDragInfo);
+      this.lastDragInfo = e;
     }
 
     /*
@@ -131,15 +140,6 @@
         ++this.timerCount;
       }
     };
-
-    /*
-     * Move slider
-     * @param {number} x
-     * @param {number} y
-     */
-    moveSlider(x) {
-      this.el.style.left = x + 'px';
-    }
 
     /*
      * Return a x value of cursor position.
