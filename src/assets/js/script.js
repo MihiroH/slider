@@ -5,8 +5,7 @@
 
     constructor(selector = '.slider-list', { on: events } = { on: {} }) {
       this.el = document.querySelector(selector);
-      this.el.style.left = 0;
-      this.el.style.top = 0;
+      this.el.style.transform = 'translateX(0)';
       this.mouseLocations = [];
       this.frameTime = 1000 / this.#fps;
       this.isAnimated = false;
@@ -93,7 +92,7 @@
      * @param {number} y
      */
     moveSlider(x) {
-      this.el.style.left = x + 'px';
+      this.el.style.transform = `translateX(${x}px)`;
     }
 
     /*
@@ -105,7 +104,8 @@
         return
       }
 
-      this.x = parseInt(this.el.style.left) + this.clientX(e) - this.clientX(this.lastDragInfo);
+      const diff = this.clientX(e) - this.clientX(this.lastDragInfo);
+      this.x = this.translateX() + diff;
       this.lastDragInfo = e;
     }
 
@@ -128,12 +128,12 @@
         const fractionRemaining = (totalTics - this.timerCount) / totalTics;
         const xVelocity = this.velocity.x * fractionRemaining;
 
-        this.moveSlider(parseInt(this.el.style.left) - xVelocity);
+        this.moveSlider(this.translateX() - xVelocity);
 
         // Only scroll for 10 calls of this function
         if(this.timerCount === totalTics) {
           clearInterval(this.timerId);
-          this.x = parseInt(this.el.style.left) - xVelocity;
+          this.x = this.translateX() - xVelocity;
           this.timerId = -1
         }
 
@@ -151,6 +151,17 @@
         return event.changedTouches[0].clientX;
       }
       return event.clientX;
+    }
+
+    /*
+     * Return the transform's translateX of css property.
+     */
+    translateX() {
+      if (this.el.style.transform) {
+        return parseInt(this.el.style.transform.replace(/[^-0-9]/g, ''));
+      }
+
+      return 0;
     }
 
     /*
