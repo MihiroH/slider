@@ -53,7 +53,7 @@
         this.timerId = 0;
       }
 
-      this.timerId = setInterval(this.onScrollTimer.bind(this), 20);
+      // this.timerId = setInterval(this.onScrollTimer.bind(this), 20);
     }
 
     /*
