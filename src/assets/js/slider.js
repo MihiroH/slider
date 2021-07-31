@@ -25,8 +25,62 @@ class Slider {
       all[key] = func.bind(this);
       return all;
     }, {});
-
     this.setEventListener(this.events);
+
+    this.supportsPassive = false;
+    this.wheelOpt = {};
+    this.wheelEvent = 'onwheel' in document.createElement('div') ? 'wheel' : 'mousewheel';
+    this.testIfBrowserSupportsPassive();
+  }
+
+  /*
+   * Test if the browser supports passive.
+   */
+  testIfBrowserSupportsPassive() {
+    let supportsPassive = false;
+
+    try {
+      window.addEventListener(
+        'test',
+        null,
+        Object.defineProperty({}, 'passive', {
+          get() {
+            supportsPassive = true;
+          }
+        })
+      );
+    } catch(e) {
+      supportsPassive = false;
+    }
+
+    this.supportsPassive = supportsPassive;
+
+    if (this.supportsPassive) {
+      this.wheelOpt = { passive: false };
+    }
+  }
+
+  /*
+   * Prevent events.
+   */
+  preventDefault(e) {
+    e.preventDefault();
+  }
+
+  /*
+   * Disable scroll.
+   */
+  disableScroll() {
+    window.addEventListener(this.wheelEvent, this.preventDefault, this.wheelOpt);
+    window.addEventListener('touchmove', this.preventDefault, this.wheelOpt);
+  }
+
+  /*
+   * Enable scroll.
+   */
+  enableScroll() {
+    window.removeEventListener(this.wheelEvent, this.preventDefault, this.wheelOpt);
+    window.removeEventListener('touchmove', this.preventDefault, this.wheelOpt);
   }
 
   /*
@@ -84,8 +138,10 @@ class Slider {
    */
   startAnimation(e) {
     this.lastDragInfo = e;
+    this.x = this.translateX();
     this.startX = this.clientX(e);
     this.isAnimated = true;
+    this.disableScroll();
     this.animation();
 
     this.timerCount = 0;
@@ -120,6 +176,7 @@ class Slider {
     this.isAnimated = false;
 
     this.controlSlidePosition(this.clientX(e));
+    this.enableScroll();
 
     if (this.mouseLocations.length < 1) {
       return;
