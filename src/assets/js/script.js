@@ -158,7 +158,7 @@
      */
     translateX() {
       if (this.el.style.transform) {
-        return parseInt(this.el.style.transform.replace(/[^-0-9]/g, ''));
+        return parseInt(this.el.style.transform.replace(/[^-.0-9]/g, ''));
       }
 
       return 0;
