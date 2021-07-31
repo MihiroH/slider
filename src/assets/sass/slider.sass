@@ -3,25 +3,8 @@
 
 .slider
   &-list-wrapper
-    width: 500px
     overflow: hidden
-    margin: auto
-    @media #{$sp}
-      width: 80%
   &-list
     display: flex
     align-items: flex-start
-    position: relative
-    left: 0
-    top: 0
     transform: translateX(0)
-  &-item
-    height: 100px
-    width: 100%
-    flex-shrink: 0
-    &:first-child
-      background-color: yellow
-    &:nth-child(2)
-      background-color: red
-    &:last-child
-      background-color: blue
