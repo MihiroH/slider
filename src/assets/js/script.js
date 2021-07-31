@@ -4,16 +4,24 @@
     #scrollTime = 310;
 
     constructor(selector = '.slider-list', { on: events } = { on: {} }) {
+      this.selector = selector;
       this.el = document.querySelector(selector);
       this.el.style.transform = 'translateX(0)';
       this.mouseLocations = [];
       this.frameTime = 1000 / this.#fps;
       this.isAnimated = false;
       this.lastDragInfo = null;
+      this.startX = null;
       this.x = null;
       this.timerId = -1;
       this.timerCount = 0;
       this.velocity = { x: null, y: null };
+      this.edgeSwipeThreshold = 20;
+      this.speed = 300;
+      this.realIndex = 0;
+      this.slideLength = this.el.children.length;
+      this.slideWidth = this.el.scrollWidth / this.slideLength;
+
       this.events = Object.entries(events).reduce((all, [key, func]) => {
         all[key] = func.bind(this);
         return all;
@@ -32,16 +40,20 @@
         move: this.detectMobile() ? 'touchmove' : 'mousemove',
         end: this.detectMobile() ? 'touchend' : 'mouseup'
       }
+
       this.el.addEventListener(eventNames.start, this.startAnimation.bind(this));
       this.el.addEventListener(eventNames.move, this.updateCursorPositionValues.bind(this));
       this.el.addEventListener(eventNames.end, this.endAnimation.bind(this));
+      document.addEventListener(eventNames.end, this.onSwipeEndInDocument.bind(this));
     }
 
     /*
      * Start animation.
+     * @param {object} e - mousedown/touchstart event
      */
     startAnimation(e) {
       this.lastDragInfo = e;
+      this.startX = this.clientX(e);
       this.isAnimated = true;
       this.animation();
 
@@ -57,9 +69,12 @@
 
     /*
      * End animation.
+     * @param {object} e - mouseup/touchend event
      */
     endAnimation(e) {
       this.isAnimated = false;
+
+      this.controlSlidePosition(this.clientX(e));
 
       if (this.mouseLocations.length < 1) {
         return;
@@ -74,30 +89,23 @@
     }
 
     /*
-     * Animation.
+     * On swipe end in document.
+     * @param {object} e - mouseend/touchend event
      */
-    animation() {
-      if (!this.isAnimated) {
+    onSwipeEndInDocument(e) {
+      if (this.startX === null) {
+        return;
+      }
+      if (e.target.closest(this.selector)) {
         return;
       }
 
-      this.moveSlider(this.x);
-
-      setTimeout(this.animation.bind(this), this.frameTime);
-    }
-
-    /*
-     * Move slider
-     * @param {number} x
-     * @param {number} y
-     */
-    moveSlider(x) {
-      this.el.style.transform = `translateX(${x}px)`;
+      this.endAnimation(e);
     }
 
     /*
      * Update cursor position values.
-     * @param {object} e -event
+     * @param {object} e - mousemove/touchmove event
      */
     updateCursorPositionValues(e) {
       if (!this.lastDragInfo) {
@@ -162,6 +170,92 @@
       }
 
       return 0;
+    }
+
+    /*
+     * Animation.
+     */
+    animation() {
+      if (!this.isAnimated) {
+        return;
+      }
+
+      this.moveSlider(this.x);
+
+      setTimeout(this.animation.bind(this), this.frameTime);
+    }
+
+    /*
+     * Move slider
+     * @param {number} x
+     * @param {number} speed
+     */
+    moveSlider(x, speed = this.speed) {
+      this.el.style.transform = `translateX(${x}px)`;
+    }
+
+    /*
+     * Control slide position.
+     * Slide prev/next if x distance is larger than edge swipe threshold.
+     * Otherwise swipe back to current index.
+     * @param {number} - index
+     * @param {number} - speed(ms)
+     */
+    controlSlidePosition(x) {
+      const diff = this.startX - x;
+
+      if (Math.abs(diff) <= this.edgeSwipeThreshold) {
+        this.slideTo(this.realIndex);
+      } else if (diff < this.edgeSwipeThreshold) {
+        this.slidePrev();
+      } else {
+        this.slideNext();
+      }
+
+      this.startX = null;
+    }
+
+    /*
+     * Slide to specified index.
+     * @param {number} - index
+     * @param {number} - speed(ms)
+     */
+    slideTo(index, speed = this.speed) {
+      // Set transition and reset after duration (speed).
+      this.el.style.transition = `transform ${speed / 1000}s ease-out`;
+      setTimeout(() => {
+        this.el.style.transition = '';
+      }, speed);
+
+      const positionX = this.slideWidth * index * -1;
+      this.moveSlider(positionX);
+    }
+
+    /*
+     * Slide prev.
+     * @param {number} - speed
+     */
+    slidePrev(speed) {
+      if (!this.realIndex) {
+        this.slideTo(this.realIndex);
+        return;
+      }
+
+      this.realIndex--;
+      this.slideTo(this.realIndex, speed);
+    }
+
+    /*
+     * Slide next.
+     */
+    slideNext(speed) {
+      if (this.realIndex === this.slideLength - 1) {
+        this.slideTo(this.realIndex);
+        return;
+      }
+
+      this.realIndex++;
+      this.slideTo(this.realIndex, speed);
     }
 
     /*
