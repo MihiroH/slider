@@ -1,6 +1,6 @@
 (function() {
   class Slider {
-    #fps = 120; // 60fpsに制限
+    #fps = 120; // 120fpsに制限
     #scrollTime = 310;
 
     constructor(selector = '.slider-list', { on: events } = { on: {} }) {
@@ -48,6 +48,38 @@
     }
 
     /*
+     * On scroll timer.
+     */
+    onScrollTimer() {
+      if (this.isAnimated) {
+        // Keep track of where the latest mouse location is
+        this.mouseLocations.unshift({ x: this.clientX(this.lastDragInfo) });
+
+        // Make sure that we're only keeping track of the last 10 mouse
+        // clicks (just for efficiency)
+        const maxTrack = 10;
+        if (this.mouseLocations.length > maxTrack) {
+          this.mouseLocations.pop();
+        }
+      } else {
+        const totalTics = Math.floor(this.#scrollTime / 20);
+        const fractionRemaining = (totalTics - this.timerCount) / totalTics;
+        const xVelocity = this.velocity.x * fractionRemaining;
+
+        this.moveSlider(this.translateX() - xVelocity);
+
+        // Only scroll for 10 calls of this function
+        if(this.timerCount === totalTics) {
+          clearInterval(this.timerId);
+          this.x = this.translateX() - xVelocity;
+          this.timerId = -1
+        }
+
+        ++this.timerCount;
+      }
+    }
+
+    /*
      * Start animation.
      * @param {object} e - mousedown/touchstart event
      */
@@ -65,6 +97,20 @@
       }
 
       // this.timerId = setInterval(this.onScrollTimer.bind(this), 20);
+    }
+
+    /*
+     * Update cursor position values.
+     * @param {object} e - mousemove/touchmove event
+     */
+    updateCursorPositionValues(e) {
+      if (!this.lastDragInfo) {
+        return
+      }
+
+      const diff = this.clientX(e) - this.clientX(this.lastDragInfo);
+      this.x = this.translateX() + diff;
+      this.lastDragInfo = e;
     }
 
     /*
@@ -102,52 +148,6 @@
 
       this.endAnimation(e);
     }
-
-    /*
-     * Update cursor position values.
-     * @param {object} e - mousemove/touchmove event
-     */
-    updateCursorPositionValues(e) {
-      if (!this.lastDragInfo) {
-        return
-      }
-
-      const diff = this.clientX(e) - this.clientX(this.lastDragInfo);
-      this.x = this.translateX() + diff;
-      this.lastDragInfo = e;
-    }
-
-    /*
-     * On scroll timer.
-     */
-    onScrollTimer() {
-      if (this.isAnimated) {
-        // Keep track of where the latest mouse location is
-        this.mouseLocations.unshift({ x: this.clientX(this.lastDragInfo) });
-
-        // Make sure that we're only keeping track of the last 10 mouse
-        // clicks (just for efficiency)
-        const maxTrack = 10;
-        if (this.mouseLocations.length > maxTrack) {
-          this.mouseLocations.pop();
-        }
-      } else {
-        const totalTics = Math.floor(this.#scrollTime / 20);
-        const fractionRemaining = (totalTics - this.timerCount) / totalTics;
-        const xVelocity = this.velocity.x * fractionRemaining;
-
-        this.moveSlider(this.translateX() - xVelocity);
-
-        // Only scroll for 10 calls of this function
-        if(this.timerCount === totalTics) {
-          clearInterval(this.timerId);
-          this.x = this.translateX() - xVelocity;
-          this.timerId = -1
-        }
-
-        ++this.timerCount;
-      }
-    };
 
     /*
      * Return a x value of cursor position.
