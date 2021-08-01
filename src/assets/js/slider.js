@@ -487,9 +487,7 @@ class Slider {
           class="slider-pagination-item"
           tabindex="0"
           data-index="${i}"
-        >
-          ${i}
-        </span>
+        >${i}</span>
       `);
     }
     pagination.insertAdjacentHTML('beforeend', children.join(''));
