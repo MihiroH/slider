@@ -9,11 +9,13 @@ block link
 block contents
   .slider
     .slider-inner
-      .slider-list-wrapper
+      .slider-container
         .slider-list
           .slider-item slide1
           .slider-item slide2
           .slider-item slide3
+        button.slider-button-prev
+        button.slider-button-next
 
 block bodyEnd
   script(src=`${jsPath}/slider.js` defer)

@@ -2,9 +2,33 @@
 @import '_config'
 
 .slider
-  &-list-wrapper
+  &-container
     overflow: hidden
+    position: relative
   &-list
     display: flex
     align-items: flex-start
     transform: translateX(0)
+  &-button
+    &-prev,
+    &-next
+      position: absolute
+      top: 50%
+      appearance: none
+      outline: none
+      width: 20px
+      height: 20px
+      border-top: 2px solid #000
+      border-right: 2px solid #000
+      border-radius: 0 2px 0 0
+      background: transparent
+      &:hover:not(.is-disabled)
+        cursor: pointer
+      &.is-disabled
+        opacity: .3
+    &-prev
+      transform: translateY(-50%) rotate(-135deg)
+      left: 24px
+    &-next
+      transform: translateY(-50%) rotate(45deg)
+      right: 24px

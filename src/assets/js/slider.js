@@ -1,11 +1,43 @@
 class Slider {
+  #initialArgs = {
+    navigation: false,
+    // navigation: Boolean,
+    // or
+    // navigation: {
+    //   prevEl: '.slider-button-prev',
+    //   nextEl: '.slider-button-next'
+    // }
+    on: {}
+  };
   #fps = 120; // 120fpsに制限
   #scrollTime = 310;
 
-  constructor(selector = '.slider-list', { on: events } = { on: {} }) {
+  constructor(
+    selector = '.slider-container',
+    {
+      sliderClass,
+      navigation,
+      on: events
+    } = this.#initialArgs
+  ) {
+    // Slider container.
     this.selector = selector;
-    this.el = document.querySelector(selector);
-    this.el.style.transform = 'translateX(0)';
+    this.container = document.querySelector(selector);
+
+    if (!this.container) {
+      console.error(`Error: ${selector} is not found.`);
+      return;
+    }
+
+    // Slider list.
+    this.slider = this.container.querySelector(sliderClass || '.slider-list');
+
+    if (!this.slider) {
+      console.error(`Error: ${sliderClass || '.slider-list'} is not found.`);
+      return;
+    }
+
+    this.slider.style.transform = 'translateX(0)';
     this.mouseLocations = [];
     this.frameTime = 1000 / this.#fps;
     this.isAnimated = false;
@@ -17,16 +49,30 @@ class Slider {
     this.velocity = { x: null, y: null };
     this.edgeSwipeThreshold = 20;
     this.speed = 300;
+    this.activeIndex = 0;
     this.realIndex = 0;
-    this.slideLength = this.el.children.length;
-    this.slideWidth = this.el.scrollWidth / this.slideLength;
+    this.slideLength = this.slider.children.length;
+    this.slideWidth = this.slider.scrollWidth / this.slideLength;
 
-    this.events = Object.entries(events).reduce((all, [key, func]) => {
+    // Create navigation.
+    this.navigation = null;
+    if (navigation === true) {
+      this.navigation = this.createNavigation();
+      this.toggleNavigationClassName();
+    } else if (navigation) {
+      this.navigation = this.createNavigation(navigation);
+      this.toggleNavigationClassName();
+    }
+
+    // Bind "this" object to specified events.
+    // And add event listener to each slides.
+    this.events = Object.entries(events || {}).reduce((all, [key, func]) => {
       all[key] = func.bind(this);
       return all;
     }, {});
     this.setEventListener(this.events);
 
+    // Check if browser supports passive.
     this.supportsPassive = false;
     this.wheelOpt = {};
     this.wheelEvent = 'onwheel' in document.createElement('div') ? 'wheel' : 'mousewheel';
@@ -94,9 +140,9 @@ class Slider {
       end: this.detectMobile() ? 'touchend' : 'mouseup'
     }
 
-    this.el.addEventListener(eventNames.start, this.startAnimation.bind(this));
-    this.el.addEventListener(eventNames.move, this.updateCursorPositionValues.bind(this));
-    this.el.addEventListener(eventNames.end, this.endAnimation.bind(this));
+    this.slider.addEventListener(eventNames.start, this.startAnimation.bind(this));
+    this.slider.addEventListener(eventNames.move, this.updateCursorPositionValues.bind(this));
+    this.slider.addEventListener(eventNames.end, this.endAnimation.bind(this));
     document.addEventListener(eventNames.end, this.onSwipeEndInDocument.bind(this));
   }
 
@@ -221,8 +267,8 @@ class Slider {
    * Return the transform's translateX of css property.
    */
   translateX() {
-    if (this.el.style.transform) {
-      return parseInt(this.el.style.transform.replace(/[^-.0-9]/g, ''));
+    if (this.slider.style.transform) {
+      return parseInt(this.slider.style.transform.replace(/[^-.0-9]/g, ''));
     }
 
     return 0;
@@ -247,7 +293,7 @@ class Slider {
    * @param {number} speed
    */
   moveSlider(x, speed = this.speed) {
-    this.el.style.transform = `translateX(${x}px)`;
+    this.slider.style.transform = `translateX(${x}px)`;
   }
 
   /*
@@ -278,9 +324,9 @@ class Slider {
    */
   slideTo(index, speed = this.speed) {
     // Set transition and reset after duration (speed).
-    this.el.style.transition = `transform ${speed / 1000}s ease-out`;
+    this.slider.style.transition = `transform ${speed / 1000}s ease-out`;
     setTimeout(() => {
-      this.el.style.transition = '';
+      this.slider.style.transition = '';
     }, speed);
 
     const positionX = this.slideWidth * index * -1;
@@ -291,27 +337,108 @@ class Slider {
    * Slide prev.
    * @param {number} - speed
    */
-  slidePrev(speed) {
+  slidePrev(speed = this.speed) {
     if (!this.realIndex) {
       this.slideTo(this.realIndex);
       return;
     }
 
     this.realIndex--;
+    this.activeIndex--;
     this.slideTo(this.realIndex, speed);
   }
 
   /*
    * Slide next.
    */
-  slideNext(speed) {
+  slideNext(speed = this.speed) {
     if (this.realIndex === this.slideLength - 1) {
       this.slideTo(this.realIndex);
       return;
     }
 
     this.realIndex++;
+    this.activeIndex++;
     this.slideTo(this.realIndex, speed);
+  }
+
+  /*
+   * Create the navigation if exists elements of the navigation.
+   * @param {object} navigation
+   */
+  createNavigation(
+    navigation = {
+      prevEl: '.slider-button-prev',
+      nextEl: '.slider-button-next'
+    }
+  ) {
+    const result = {
+      prevEl: null,
+      nextEl: null
+    }
+
+    if (!navigation || !navigation.prevEl || !navigation.nextEl) {
+      const example = {
+        prevEl: '.slider-button-prev',
+        nextEl: '.slider-button-next'
+      }
+
+      console.error(`Error: Incorrect navigation format.\nYou must set parameters like below.\n${JSON.stringify(example, null, 2)}`);
+      return result;
+    }
+
+    const prevEl = this.container.querySelector(navigation.prevEl) || null;
+    const nextEl = this.container.querySelector(navigation.nextEl) || null;
+
+    if (!prevEl) {
+      console.error(`ReferenceError: ${navigation.prevEl} is not found.`);
+    }
+    if (!nextEl) {
+      console.error(`ReferenceError: ${navigation.nextEl} is not found.`);
+    }
+    if (!prevEl || !nextEl) {
+      return result;
+    }
+
+    prevEl.addEventListener('click', () => {
+      this.slidePrev();
+      this.toggleNavigationClassName();
+    });
+    nextEl.addEventListener('click', () => {
+      this.slideNext();
+      this.toggleNavigationClassName();
+    });
+
+    result.prevEl = prevEl;
+    result.nextEl = nextEl;
+
+    return result;
+  }
+
+  /*
+   * Toggle navigation class name.
+   * @param {number} activeIndex
+   */
+  toggleNavigationClassName(activeIndex = this.activeIndex) {
+    if (
+      !this.navigation ||
+      !this.navigation.prevEl ||
+      !this.navigation.nextEl
+    ) {
+      return;
+    }
+
+    if (!activeIndex) {
+      this.navigation.prevEl.classList.add('is-disabled');
+    } else {
+      this.navigation.prevEl.classList.remove('is-disabled');
+    }
+
+    if (this.activeIndex === this.slideLength - 1) {
+      this.navigation.nextEl.classList.add('is-disabled');
+    } else {
+      this.navigation.nextEl.classList.remove('is-disabled');
+    }
   }
 
   /*
