@@ -4,11 +4,12 @@
 .slider
   &-container
     overflow: hidden
-    position: relative
   &-list
     display: flex
     align-items: flex-start
     transform: translateX(0)
+    &-wrapper
+      position: relative
   &-button
     &-prev,
     &-next
@@ -42,9 +43,10 @@
       border-radius: 50%
       width: 10px
       height: 10px
+      outline: none
       &:hover
         cursor: pointer
       &:not(:first-child)
-        margin-left: 5px
+        margin-left: 8px
       &.is-active
         background: #000
