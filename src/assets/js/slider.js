@@ -1,11 +1,9 @@
 class Slider {
   #initialArgs = {
     navigation: false,
-    // navigation: Boolean,
-    // or
-    // navigation: {
-    //   prevEl: '.slider-button-prev',
-    //   nextEl: '.slider-button-next'
+    // type Navigation = Boolean || {
+    //   prevEl: string,
+    //   nextEl: string
     // }
     // navigation: Navigation,
     pagination: false,
@@ -58,7 +56,7 @@ class Slider {
     this.slideLength = this.slider.children.length;
     this.slideWidth = this.slider.scrollWidth / this.slideLength;
 
-    // Create navigation.
+    // Create a navigation.
     this.navigation = null;
     if (navigation === true) {
       this.navigation = this.createNavigation();
@@ -350,6 +348,9 @@ class Slider {
     // TODO: this.activeIndex = this.realIndex % this.allSlideLength;
     this.activeIndex = index;
 
+    if (this.navigation) {
+      this.toggleNavigationClassName(index);
+    }
     if (this.pagination) {
       this.switchPaginationClassName(index);
     }
@@ -365,9 +366,7 @@ class Slider {
       return;
     }
 
-    this.realIndex--;
-    this.activeIndex--;
-    this.slideTo(this.realIndex, speed);
+    this.slideTo(this.realIndex - 1, speed);
   }
 
   /*
@@ -379,9 +378,7 @@ class Slider {
       return;
     }
 
-    this.realIndex++;
-    this.activeIndex++;
-    this.slideTo(this.realIndex, speed);
+    this.slideTo(this.realIndex + 1, speed);
   }
 
   /*
@@ -424,11 +421,9 @@ class Slider {
 
     prevEl.addEventListener('click', () => {
       this.slidePrev();
-      this.toggleNavigationClassName();
     });
     nextEl.addEventListener('click', () => {
       this.slideNext();
-      this.toggleNavigationClassName();
     });
 
     result.prevEl = prevEl;
@@ -438,7 +433,7 @@ class Slider {
   }
 
   /*
-   * Toggle navigation class name.
+   * Toggle class name of the navigation.
    * @param {number} activeIndex
    */
   toggleNavigationClassName(activeIndex = this.activeIndex) {
