@@ -7,6 +7,9 @@ class Slider {
     //   prevEl: '.slider-button-prev',
     //   nextEl: '.slider-button-next'
     // }
+    // navigation: Navigation,
+    pagination: false,
+    // pagination: Boolean || string
     on: {}
   };
   #fps = 120; // 120fpsに制限
@@ -17,6 +20,7 @@ class Slider {
     {
       sliderClass,
       navigation,
+      pagination,
       on: events
     } = this.#initialArgs
   ) {
@@ -62,6 +66,16 @@ class Slider {
     } else if (navigation) {
       this.navigation = this.createNavigation(navigation);
       this.toggleNavigationClassName();
+    }
+
+    // Create a pagination.
+    this.pagination = null;
+    if (pagination === true) {
+      this.pagination = this.createPagination(undefined, this.slideLength);
+      this.switchPaginationClassName();
+    } else if (pagination) {
+      this.pagination = this.createPagination(pagination, this.slideLength);
+      this.switchPaginationClassName();
     }
 
     // Bind "this" object to specified events.
@@ -331,6 +345,14 @@ class Slider {
 
     const positionX = this.slideWidth * index * -1;
     this.moveSlider(positionX);
+
+    this.realIndex = index;
+    // TODO: this.activeIndex = this.realIndex % this.allSlideLength;
+    this.activeIndex = index;
+
+    if (this.pagination) {
+      this.switchPaginationClassName(index);
+    }
   }
 
   /*
@@ -439,6 +461,75 @@ class Slider {
     } else {
       this.navigation.nextEl.classList.remove('is-disabled');
     }
+  }
+
+  /*
+   * Create the pagination.
+   * @param {string} selector
+   * @param {number} length
+   */
+  createPagination(selector = '.slider-pagination', slideLength = 0) {
+    if (slideLength < 1) {
+      return null;
+    }
+    if (!selector) {
+      console.error(`Error: Incorrect pagination format.\nYou must set parameters like below.\n".slider-pagination"`);
+      return null;
+    }
+
+    const pagination = this.container.querySelector(selector) || null;
+
+    if (!pagination) {
+      console.error(`ReferenceError: ${selector} is not found.`);
+      return null;
+    }
+
+    // Insert children into the pagination.
+    const children = [];
+    for(let i = 0; i < slideLength; i++) {
+      children.push(`
+        <span
+          class="slider-pagination-item"
+          tabindex="0"
+          data-index="${i}"
+        >
+          ${i}
+        </span>
+      `);
+    }
+    pagination.insertAdjacentHTML('beforeend', children.join(''));
+
+    // Add event listener to children.
+    const childrenEl = pagination.querySelectorAll('.slider-pagination-item');
+    childrenEl.forEach(child => {
+      child.addEventListener('click', e => {
+        const index = parseInt(e.target.getAttribute('data-index'));
+        this.slideTo(index);
+      });
+    });
+
+    return pagination;
+  }
+
+  /*
+   * Switch class name of children of the pagination.
+   * @param {number} activeIndex
+   */
+  switchPaginationClassName(activeIndex = this.activeIndex) {
+    if (!this.pagination || !this.pagination.hasChildNodes()) {
+      return;
+    }
+
+    const children = [...this.pagination.children];
+    children.forEach(child => {
+      child.classList.remove('is-active');
+    });
+
+    const target = children[activeIndex];
+    if (!target) {
+      return;
+    }
+    target.classList.add('is-active');
   }
 
   /*
