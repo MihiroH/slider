@@ -4,9 +4,26 @@ block var
   - fileName = 'index'
 
 block link
-  link(rel="stylesheet" href=`${cssPath}/top.css?${TIMESTAMP}`)
+  link(rel="stylesheet" href=`${cssPath}/slider.css?${TIMESTAMP}`)
 
 block contents
+  .slider
+    .slider-inner
+      .slider-container
+        .slider-list-wrapper
+          .slider-list
+            .slider-item
+              img(src="https://via.placeholder.com/300x150/0000FF/FFFFFF?text=example1.com" alt="img01")
+            .slider-item
+              img(src="https://via.placeholder.com/300x150/FF0000/FFFFFF?text=example2.com" alt="img02")
+            .slider-item
+              img(src="https://via.placeholder.com/300x150/FFFF00/000000?text=example3.com" alt="img03")
+            .slider-item
+              img(src="https://via.placeholder.com/300x150/FFFFFF/000000?text=example4.com" alt="img04")
+          button.slider-button-prev
+          button.slider-button-next
+        .slider-pagination
 
 block bodyEnd
-  script(src=`${jsPath}/script.js`)
+  script(src=`${jsPath}/slider.js` defer)
+  script(src=`${jsPath}/script.js` defer)

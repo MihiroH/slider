@@ -99,10 +99,10 @@ gulp.task('clean', () => {
 
 gulp.task('browser-sync', done => {
   browserSync.init({
+    port: 8080,
     server: {
       root: ROOT,
       baseDir: DIST,
-      port: 8080,
       notify: true
     }
   })

@@ -1,3 +1,16 @@
 @charset 'UTF-8'
 @import '_reset'
 @import '_common'
+
+.slider
+  &-container
+    width: 500px
+    margin: auto
+    @media #{$sp}
+      width: 80%
+  &-item
+    width: 100%
+    flex-shrink: 0
+    img
+      width: 100%
+      display: block
