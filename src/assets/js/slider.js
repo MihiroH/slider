@@ -1,5 +1,6 @@
 class Slider {
   #initialArgs = {
+    loop: false,
     navigation: false,
     // type Navigation = Boolean || {
     //   prevEl: string,
@@ -16,6 +17,7 @@ class Slider {
   constructor(
     selector = '.slider-container',
     {
+      loop,
       sliderClass,
       navigation,
       pagination,
@@ -52,9 +54,25 @@ class Slider {
     this.edgeSwipeThreshold = 20;
     this.speed = 300;
     this.activeIndex = 0;
-    this.realIndex = 0;
-    this.slideLength = this.slider.children.length;
-    this.slideWidth = this.slider.scrollWidth / this.slideLength;
+    this.loop = loop || false;
+    this.sliderLength = this.slider.children.length;
+    this.slideWidth = this.slider.scrollWidth / this.sliderLength;
+
+    // Initialize a loop slider.
+    if (this.loop) {
+      const first = this.slider.children[0];
+      const last = this.slider.children[this.sliderLength - 1];
+
+      this.slider.append(first.cloneNode(true));
+      this.slider.prepend(last.cloneNode(true));
+      this.sliderLoopLength = this.slider.children.length;
+      this.slideWidth = this.slider.scrollWidth / this.sliderLoopLength;
+      this.loopBaseIndex = 1;
+
+      const positionX = this.slideWidth * this.loopBaseIndex * -1;
+      this.moveSlider(positionX);
+    }
+
 
     // Create a navigation.
     this.navigation = null;
@@ -69,10 +87,10 @@ class Slider {
     // Create a pagination.
     this.pagination = null;
     if (pagination === true) {
-      this.pagination = this.createPagination(undefined, this.slideLength);
+      this.pagination = this.createPagination(undefined, this.sliderLength);
       this.switchPaginationClassName();
     } else if (pagination) {
-      this.pagination = this.createPagination(pagination, this.slideLength);
+      this.pagination = this.createPagination(pagination, this.sliderLength);
       this.switchPaginationClassName();
     }
 
@@ -319,7 +337,7 @@ class Slider {
     const diff = this.startX - x;
 
     if (Math.abs(diff) <= this.edgeSwipeThreshold) {
-      this.slideTo(this.realIndex);
+      this.slideTo(this.activeIndex);
     } else if (diff < this.edgeSwipeThreshold) {
       this.slidePrev();
     } else {
@@ -339,20 +357,46 @@ class Slider {
     this.slider.style.transition = `transform ${speed / 1000}s ease-out`;
     setTimeout(() => {
       this.slider.style.transition = '';
+
+      if (this.loop) {
+        let i = null;
+        if (index < first) {
+          i = last;
+        } else if (index === last + 1) {
+          i = first;
+        }
+
+        if (i !== null) {
+          const positionX = this.slideWidth * (this.loopBaseIndex + i) * -1;
+          this.moveSlider(positionX);
+        }
+      }
     }, speed);
 
-    const positionX = this.slideWidth * index * -1;
+    const first = 0;
+    const last = this.sliderLength - 1;
+    const i = this.loop ? this.loopBaseIndex + index : index;
+    const positionX = this.slideWidth * i * -1;
+
     this.moveSlider(positionX);
 
-    this.realIndex = index;
-    // TODO: this.activeIndex = this.realIndex % this.allSlideLength;
-    this.activeIndex = index;
+    if (this.loop) {
+      if (index < first) {
+        this.activeIndex = last;
+      } else if (index === last + 1) {
+        this.activeIndex = first;
+      } else {
+        this.activeIndex = index;
+      }
+    } else {
+      this.activeIndex = index;
+    }
 
     if (this.navigation) {
-      this.toggleNavigationClassName(index);
+      this.toggleNavigationClassName(this.activeIndex);
     }
     if (this.pagination) {
-      this.switchPaginationClassName(index);
+      this.switchPaginationClassName(this.activeIndex);
     }
   }
 
@@ -361,24 +405,26 @@ class Slider {
    * @param {number} - speed
    */
   slidePrev(speed = this.speed) {
-    if (!this.realIndex) {
-      this.slideTo(this.realIndex);
+    if (!this.loop && !this.activeIndex) {
+      this.slideTo(this.activeIndex);
       return;
     }
 
-    this.slideTo(this.realIndex - 1, speed);
+    this.slideTo(this.activeIndex - 1, speed);
   }
 
   /*
    * Slide next.
    */
   slideNext(speed = this.speed) {
-    if (this.realIndex === this.slideLength - 1) {
-      this.slideTo(this.realIndex);
+    const last = this.activeIndex === this.sliderLength - 1;
+
+    if (!this.loop && last) {
+      this.slideTo(this.activeIndex);
       return;
     }
 
-    this.slideTo(this.realIndex + 1, speed);
+    this.slideTo(this.activeIndex + 1, speed);
   }
 
   /*
@@ -438,6 +484,7 @@ class Slider {
    */
   toggleNavigationClassName(activeIndex = this.activeIndex) {
     if (
+      this.loop ||
       !this.navigation ||
       !this.navigation.prevEl ||
       !this.navigation.nextEl
@@ -451,7 +498,7 @@ class Slider {
       this.navigation.prevEl.classList.remove('is-disabled');
     }
 
-    if (this.activeIndex === this.slideLength - 1) {
+    if (this.activeIndex === this.sliderLength - 1) {
       this.navigation.nextEl.classList.add('is-disabled');
     } else {
       this.navigation.nextEl.classList.remove('is-disabled');
@@ -463,8 +510,8 @@ class Slider {
    * @param {string} selector
    * @param {number} length
    */
-  createPagination(selector = '.slider-pagination', slideLength = 0) {
-    if (slideLength < 1) {
+  createPagination(selector = '.slider-pagination', sliderLength = 0) {
+    if (sliderLength < 1) {
       return null;
     }
     if (!selector) {
@@ -481,7 +528,7 @@ class Slider {
 
     // Insert children into the pagination.
     const children = [];
-    for(let i = 0; i < slideLength; i++) {
+    for(let i = 0; i < sliderLength; i++) {
       children.push(`
         <span
           class="slider-pagination-item"
