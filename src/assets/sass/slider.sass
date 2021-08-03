@@ -1,0 +1,54 @@
+@charset 'UTF-8'
+@import '_config'
+
+.slider
+  &-container
+    overflow: hidden
+  &-list
+    display: flex
+    align-items: flex-start
+    transform: translateX(0)
+    &-wrapper
+      position: relative
+  &-button
+    &-prev,
+    &-next
+      position: absolute
+      top: 50%
+      appearance: none
+      outline: none
+      width: 20px
+      height: 20px
+      border-top: 2px solid #000
+      border-right: 2px solid #000
+      border-radius: 0 2px 0 0
+      background: transparent
+      &:hover:not(.is-disabled)
+        cursor: pointer
+      &.is-disabled
+        opacity: .3
+    &-prev
+      transform: translateY(-50%) rotate(-135deg)
+      left: 24px
+    &-next
+      transform: translateY(-50%) rotate(45deg)
+      right: 24px
+  &-pagination
+    display: flex
+    justify-content: center
+    flex-wrap: wrap
+    font-size: 0
+    margin-top: 10px
+    &-item
+      background: #e8e8e8
+      border-radius: 50%
+      width: 10px
+      height: 10px
+      outline: none
+      margin: 4px
+      &:hover
+        cursor: pointer
+      &.is-active
+        background: #000
+  img
+    pointer-events: none
